@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-// import { DB_NAME } from "../constant.js";
   
 
 const connectDB = async ()=>{
     try {
-        const connectionIntance = await mongoose.connect(`${process.env.MONGO_URL}/${process.env.DB_NAME}`);
-        console.log(`Mongo Connnect !!!!`);
+        console.log(process.env.MONGODB_URI + " 1")
+        const connectionInst = await mongoose.connect(`${process.env.MONGODB_URI}`);
+        console.log(`Mongo Connected !!!!`);
     } catch (error) {
         console.log("Mongo not connect !!",error);
         process.exit(1)
@@ -15,5 +15,3 @@ const connectDB = async ()=>{
 
 
 export default connectDB;
-
-
