@@ -16,13 +16,13 @@ app.use(cookieParser())
 
 
 import userRoute from "./routes/user.route.js";
-import transactionRoute from "./routes/transaction.route.js";
-import paymentRoute from "./routes/payment.route.js";
+// import transactionRoute from "./routes/transaction.route.js";
+// import paymentRoute from "./routes/payment.route.js";
 
 
 //app.use("/api/v1", router)
 app.use("/api/v1/user", userRoute)
-app.use("/api/v1/transaction", transactionRoute)
-app.use("/api/v1/payment", paymentRoute)
+// app.use("/api/v1/transaction", transactionRoute)
+// app.use("/api/v1/payment", paymentRoute)
 
 export default app;

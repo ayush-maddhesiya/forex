@@ -1,4 +1,6 @@
 import mongoose, {Schema} from "mongoose";
+import bcrypt from "bcrypt";
+import Jwt from "jsonwebtoken";
 
 const TransactionType = {
   WITHDRAW: 'WITHDRAW',

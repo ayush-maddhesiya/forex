@@ -1,5 +1,6 @@
-import { User } from "../models/user.model.js"
-
+import  User  from "../models/user.model.js"
+import bcrypt from "bcrypt"
+// import jwt from "jsonwebtoken"
 const test = (req, res) => {
     res.status(200).json({
         status: "success",
@@ -49,13 +50,13 @@ const register = async (req, res) => {
             })
         }
     
-        const hashPassword = await bcrypt.hash(password, 10);   
+        
 
         // Create new user
         const newUser = new User({
             name: `${firstName} ${lastName}`,
             email,
-            password: hashPassword,
+            password,
             phone,
             aadharNo,
             pan,
@@ -90,49 +91,50 @@ const register = async (req, res) => {
 } 
 
 
-const login = async (req, res) => {
-    const { email, password } = req.body;
-    if(!email || !password) {
-        return res.status(400).json({
-            status: "fail",
-            message: "Please provide email and password"
-        })
-    }
-    try {
+    const login = async (req, res) => {
+        const { email, password } = req.body;
         
+        if(!email || !password) {
+            return res.status(400).json({
+                status: "fail",
+                message: "Please provide email and password"
+            })
+        }
+    try {
         const user = await User.findOne({ email });
+        console.log(`User from DB : ${req.userId}`)
         if (!user) {
             return res.status(401).json({
                 status: "fail",
-                message: "Invalid email or password"
-            })
+                message: "Invalid email"
+            });
         }
 
-        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        
+        const isPasswordCorrect = await bcrypt.compare(password.trim(), user.password.trim());
         if (!isPasswordCorrect) {
             return res.status(401).json({
                 status: "fail",
-                message: "Invalid email or password"
-            })
+                message: "Invalid password"
+            });
         }
-        const { accessToken } = await generateAccessToken(user._id)
 
+        const { accessToken } = await generateAccessToken(user._id);
 
+        const options = { httpOnly: true, secure: true, sameSite: "none" };
         res.status(200)
-        .cookie("accessToken", accessToken, options, { httpOnly: true, secure: true, sameSite: "none" })
-        .json({
-            status: "success",
-            message: "login success"
-        })
+            .cookie("accessToken", accessToken, options)
+            .json({
+                status: "success",
+                message: "login success"
+            });
     } catch (error) {
         return res.status(500).json({
             status: "error",
             message: "Internal server error",
             error: error.message
-        })
-        
-    }    
-}
+        });
+    }}
 
 const logout = async (req, res) => {
     await User.findByIdAndUpdate(

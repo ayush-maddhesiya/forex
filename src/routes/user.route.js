@@ -5,8 +5,7 @@ import {
   login,
   changePassword,
   dashboard,
-  logOut
-    
+  logout as logOut
  } from '../controllers/user.controller.js';
 
 
