@@ -1,13 +1,13 @@
-import { User } from "../models/user.model.js";
+import  User  from "../models/user.model.js";
 
 import Jwt  from "jsonwebtoken";
-const veriftyJWT = asyncHandler(async (req, res, next) => {
+const veriftyJWT = async (req, res, next) => {
     try {
         const token = req.cookies?.accessToken || req.header("Authorization").replace("Bearer ", "")
         if (!token) {
             throw new ApiError(401, "Unauthorized acces")
         }
-    
+      console.log("Auth middleware called")
     
         const decodedToken = await Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
     
@@ -24,9 +24,9 @@ const veriftyJWT = asyncHandler(async (req, res, next) => {
     } catch (error) {
         throw new ApiError(401,"Invalid acccess token ")
     }
-})
+}
 
-const isAdmin = asyncHandler(async (req, res, next) => {
+const isAdmin = async (req, res, next) => {
   const token = req.cookies?.accessToken || req.header("Authorization").replace("Bearer ", "")
   if (!token) {
     throw new ApiError(401, "Unauthorized access")
@@ -41,8 +41,9 @@ const isAdmin = asyncHandler(async (req, res, next) => {
   }
   req.user = user;
   req.userId = user._id;
+  req.role = user.role;
   next();
-})
+}
 
 export {
   isAdmin,
