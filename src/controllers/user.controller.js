@@ -228,12 +228,13 @@ const changePassword = async (req, res) => {
 
 const dashboard = async (req, res) => {
     const userId = req.user.id;
-    if (!userId) {
-        return res.status(400).json({
-            status: "fail",
-            message: "User not found"
-        })
-    }
+    console.log(`User from DB : ${req.userId} User from JWT : ${userId}`)
+    // if (!userId) {
+    //     return res.status(400).json({
+    //         status: "fail",
+    //         message: "User not found"
+    //     })
+    // }
     res.status(200).json({
         status: "success",
         message: "dashboard success"
