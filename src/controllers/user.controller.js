@@ -112,6 +112,7 @@ const register = async (req, res) => {
 
         
         const isPasswordCorrect = await bcrypt.compare(password.trim(), user.password.trim());
+        console.log(`Old Password: ${user.password} New Password: ${password} Is Password Correct: ${isPasswordCorrect}`)
         if (!isPasswordCorrect) {
             return res.status(401).json({
                 status: "fail",
@@ -188,6 +189,7 @@ const changePassword = async (req, res) => {
         }
 
         const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+        
         if (!isPasswordCorrect) {
             return res.status(401).json({
                 status: "fail",
@@ -195,8 +197,8 @@ const changePassword = async (req, res) => {
             })
         }
 
-        const hashNewPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashNewPassword;
+        //dont need to hash password again as it is already hashed in the model
+        user.password = newPassword;
         await user.save();
 
     } catch (error) {
