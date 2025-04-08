@@ -1,4 +1,4 @@
-import { object } from 'zod';
+
 import { Transaction } from '../models/transaction.model.js';
 import { User } from '../models/user.model.js';
 
@@ -239,6 +239,36 @@ const getWithdrawalById = async (req, res) => {
   }
 }
 
+const historyTransaction = async (req, res) => { 
+  const { userId } = req.params;  //TODO : replace by req.user.id
+  if (!userId) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Please provide userId"
+    })
+  }
+  try {
+    const transactions = await Transaction.find({ userId },
+      { type: 1, status: 1, amount: 1, transactionId: 1, createdAt: 1 } // Select only the fields you need
+    ).sort({ createdAt: -1 }
+    ).limit(10); // Limit to the last 10 transactions
+    if (!transactions || transactions.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No transactions found"
+      })
+    }
+    res.status(200).json({
+      status: "success",
+      data: transactions
+    })
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: error.message
+    })
+  }
+}
 
 
 export {
@@ -247,5 +277,6 @@ export {
     getDepositById,
     createWithdrawal,
     getallWithdrawal,
-    getWithdrawalById
+    getWithdrawalById,
+    historyTransaction,
 }

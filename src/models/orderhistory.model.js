@@ -18,9 +18,10 @@ const OrderHistorySchema = new Schema({
     type: Number,
     required: true
   },
+  //need to  look into this
   buyPrice: {
     type: Number,
-    required: true
+    // required: true        
   },
   sellPrice: {
     type: Number
