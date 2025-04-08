@@ -3,13 +3,25 @@ import User from '../models/user.model.js';
 
 const createLoanRequest = async (req, res) => {
   try {
-    const userId = req.cookies.userId;
+    const userId = req.cookies.userId;  //TODO: check if userId is in cookie or header
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { amount, duration } = req.body;
+    if (!amount || !duration) {
+      return res.status(400).json({ error: 'Amount and duration are required' });
+    }
+    if (isNaN(amount) || isNaN(duration)) {
+      return res.status(400).json({ error: 'Amount and duration must be numbers' });
+    }
+
+    if (amount <= 0 || duration <= 0) {
+      return res.status(400).json({ error: 'Amount and duration must be positive numbers' });
+    }
+
+    
 
     // Get user
     const user = await User.findById(userId);
@@ -46,7 +58,7 @@ const createLoanRequest = async (req, res) => {
   }
 }
 
-const getLoanRequests = async (req, res) => {
+const getAllLoanRequests = async (req, res) => {
   try {
     const userId = req.cookies.userId;
 
@@ -72,7 +84,7 @@ const getLoanRequests = async (req, res) => {
   }
 }
 
-const LoanStatus = async (req, res) => {
+const getLoanStatus = async (req, res) => {
   try {
     const userId = req.cookies.userId;
 
@@ -130,7 +142,8 @@ const getLoanRequestsById = async (req, res) => {
 
 export {
   createLoanRequest,
-  getLoanRequests,
-  LoanStatus,
-  getLoanRequestsById
+  getAllLoanRequests,
+  getLoanRequestsById,
+  getLoanStatus,
+  // updateLoanRequest
 }
