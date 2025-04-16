@@ -2,7 +2,7 @@ import { Router } from "express";
 
 
 const router = Router();
-const { isAdmin, veriftyJWT } = require("../middleware/auth.middleware.js");
+import { isAdmin, veriftyJWT }  from  "../middleware/auth.middleware.js";
 
 import {
   approveWithdrawal,
