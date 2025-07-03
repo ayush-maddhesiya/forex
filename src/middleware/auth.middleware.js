@@ -1,6 +1,7 @@
 import  User  from "../models/user.model.js";
-
 import Jwt  from "jsonwebtoken";
+
+
 const veriftyJWT = async (req, res, next) => {
   // console.log("Auth middleware called")
     try {
@@ -21,6 +22,7 @@ const veriftyJWT = async (req, res, next) => {
     
         req.user = user;
         req.userId = user._id;
+        // req.role = user.role
         next();
     } catch (error) {
         return res.status(401).json({ message: "Invalid access token" })
