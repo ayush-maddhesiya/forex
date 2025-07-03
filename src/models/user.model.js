@@ -120,6 +120,18 @@ const UserSchema = new Schema({
     required: true,
     trim: true
   },
+  aadharPhoto: {
+    type: String,
+    required: true
+  },
+  panPhoto: {
+    type: String,
+    required: true
+  },
+  userPhoto: {
+    type: String,
+    required: true
+  },
   address: {
     type: String,
     required: true,
@@ -131,7 +143,7 @@ const UserSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'user', ],
+    enum: ['admin', 'user' ],
     default: 'user',
     trim: true
   },
@@ -140,6 +152,14 @@ const UserSchema = new Schema({
     default: 'active',
     trim: true
   },
+  transactions:
+    [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Transaction'
+      },
+    ],
+
   loanRequest: [{
     type: Schema.Types.ObjectId,
     ref: 'LoanRequest'
@@ -148,6 +168,7 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'PaymentInfo'
   }],
+  //order is trade
   orderHistory: [{
     type: Schema.Types.ObjectId,
     ref: 'OrderHistory'
@@ -171,6 +192,7 @@ UserSchema.methods.generateAccessToken = function(){
       email: this.email,
       username: this.username,
       fullName: this.fullName,
+      role: this.role
   },
   process.env.ACCESS_TOKEN_SECRET,
   {
@@ -185,6 +207,79 @@ UserSchema.pre('save',async function (next){
   this.password = await bcrypt.hash(this.password,10);
   next();
 })
+
+
+UserSchema.statics.getUserBalances = async function(userId) {
+  const Transaction = mongoose.model('Transaction');
+  
+  const balanceData = await Transaction.aggregate([
+    { $match: { userId: userId } },
+    {
+      $group: {
+        _id: null,
+        totalDeposits: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ['$type', 'DEPOSIT'] }, { $eq: ['$status', 'COMPLETED'] }] },
+              '$amount',
+              0
+            ]
+          }
+        },
+        totalWithdrawals: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ['$type', 'WITHDRAWAL'] }, { $eq: ['$status', 'COMPLETED'] }] },
+              '$amount',
+              0
+            ]
+          }
+        },
+        pendingDeposits: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ['$type', 'DEPOSIT'] }, { $eq: ['$status', 'PENDING'] }] },
+              '$amount',
+              0
+            ]
+          }
+        },
+        pendingWithdrawals: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ['$type', 'WITHDRAWAL'] }, { $eq: ['$status', 'PENDING'] }] },
+              '$amount',
+              0
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
+  const data = balanceData[0] || {
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    pendingDeposits: 0,
+    pendingWithdrawals: 0
+  };
+
+  const totalBalance = data.totalDeposits - data.totalWithdrawals;
+  const availableBalance = totalBalance - data.pendingWithdrawals;
+  const pendingAmount = data.pendingDeposits + data.pendingWithdrawals;
+
+  return {
+    totalBalance,
+    availableBalance,
+    pendingAmount,
+    totalWithdrawn: data.totalWithdrawals,
+    totalDeposited: data.totalDeposits,
+    pendingDeposits: data.pendingDeposits,
+    pendingWithdrawals: data.pendingWithdrawals
+  };
+};
+
+
 
 
 
