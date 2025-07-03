@@ -244,13 +244,154 @@ const requesttoBuy = async (req, res) => {
 }
 
 
+//----------------------- new controllers -----------------------------------------------
+const getUserTradeHistory = async (req, res) => {
+    const { userId } = req.params;  //todo: get userId from token
+    
 
-export{
-    totalTrade,
-    totalInvestment,
-    totalProfitLoss,
-    historyOrder,
-    requesttoSell,
-    requesttoBuy,
-    requesttoSellPending,
+    try {
+        const tradeHistory = await OrderHistory.find({ userId });
+
+        res.status(200).json({
+            status: "success",
+            data: tradeHistory
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: error.message
+        });
+    }
+}
+
+const addtradetobuy = async (req, res) => {
+    const { userId } = req.params;  //todo: get userId from token
+    const { symbol, quantity, buyPrice, tradeAmount, tradetype } = req.body;
+
+
+
+    if(!symbol || !quantity || !buyPrice || !tradeAmount) {
+        return res.status(400).json({
+            status: "error",
+            message: "Please provide all required fields"
+        })
+    }
+    if(tradetype !== 'LONG' && tradetype !== 'SHORT') {
+        return res.status(400).json({
+            status: "error",
+            message: "Please provide valid trade type"
+        })
+    }
+
+    if( tradeAmount < 0 ) {
+        return res.status(400).json({
+            status: "error",
+            message: "Please provide valid trade amount"
+        })
+    }
+
+    if(tradeAmount !== quantity * buyPrice) {
+        return res.status(400).json({
+            status: "error",
+            message: "Trade amount should be equal to quantity * buy price"
+        })
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({
+            status: "error",
+            message: "User not found"
+        });
+    }
+
+    try {
+        const order = new OrderHistory({
+            userId,
+            symbol,
+            quantity,
+            buyPrice,
+            tradeAmount,
+            type: tradetype,
+            tradeDate: new Date(),
+            status: "OPEN",  // Initial status is OPEN
+        });
+
+        await order.save();
+
+        res.status(201).json({
+            status: "success",
+            data: order
+        });
+
+        user.orderHistory.push(order._id);
+        await user.save();
+        
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: error.message
+        });
+    }
+}
+
+const addtradetosell = async (req, res) => {
+    const { userId } = req.params;  //todo: get userId from token
+    const { orderId, sellPrice } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({
+            status: "error",
+            message: "User not found"
+        });
+    }
+
+
+    if(!orderId || !sellPrice) {
+        return res.status(400).json({
+            status: "error",
+            message: "Please provide all required fields"
+        })
+    }
+
+    try {
+        const order = await OrderHistory.findById(orderId);
+        if(!order) {
+            return res.status(404).json({
+                status: "error",
+                message: "Order not found"
+            })
+        }
+
+        order.sellPrice = sellPrice;
+        order.status = "COMPLETED";
+        await order.save();
+
+        res.status(200).json({
+            status: "success",
+            data: order
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: error.message
+        });
+    }
+}
+
+
+export  {
+    // totalTrade,
+    // totalInvestment,
+    // totalProfitLoss,
+    // historyOrder,
+    // requesttoSell,
+    // requesttoBuy,
+    // requesttoSellPending,
+
+    getUserTradeHistory,
+    addtradetobuy,
+    addtradetosell,
 }

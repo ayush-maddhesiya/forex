@@ -1,11 +1,42 @@
-import LoanRequest from "../models/loanrequest.model";
-import OrderHistory from "../models/orderhistory.model";
-import Transitions from "../models/transitions.model";
+// import LoanRequest from "../models/loanrequest.model.js";
+// import OrderHistory from "../models/orderhistory.model.js";
+// import Transitions from "../models/transitions.model.js";
 import { ObjectId } from "mongoose";
 
 /*
 Need to fuigure out total route..
 */
+
+
+const userapprove = async (req, res) => {
+  const { id } = req.body;
+  // const { userID } = req.userID;
+  if (!id) {
+    return res.status(400).json({ status: "fail", message: "User ID is required" });
+  }
+  // if (!userID) {
+  //   return res.status(400).json({ status: "fail", message: "Admin User ID is required" });
+  // }
+  if (!ObjectId.isValid(id) ) {
+    return res.status(400).json({ status: "fail", message: "Invalid User ID " });
+  }
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: id, isVerified: false },
+      { isVerified: true },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ status: "fail", message: "User not found" });
+    }
+    //return user detail without passsword for safety
+    return res.status(200).json({ status: "success", message: "User approved", user: user.select({ password: 0, isVerified: 0 }) });
+  } catch (error) {
+    return res.status(500).json({ status: "fail", message: "Server error", error });
+  }
+}
 
 const approveWithdrawal = async (req, res) => {
   const { id } = req.body;
@@ -147,66 +178,7 @@ const rejectDeposit = async (req, res) => {
   }
 }
 
-const approvedLoan = async (req, res) => {
-  const { id } = req.body;
-  const { userID } = req.userID;
-  if (!id) {
-    return res.status(400).json({ status: "fail", message: "Loan ID is required" });
-  }
-  if (!userID) {
-    return res.status(400).json({ status: "fail", message: "User ID is required" });
-  }
-  if (!ObjectId.isValid(id) || !ObjectId.isValid(userID)) {
-    return res.status(400).json({ status: "fail", message: "Invalid Loan ID or User ID" });
-  }
 
-  try {
-    const loan = await LoanRequest.findOneAndUpdate(
-      { _id: id, userID: userID , status: "PENDING" },
-      { status: "COMPLETED" },
-      { new: true }
-    );
-
-    if (!loan) {
-      return res.status(404).json({ status: "fail", message: "Loan not found" });
-    }
-
-    return res.status(200).json({ status: "success", message: "Loan approved", loan });
-  } catch (error) {
-    return res.status(500).json({ status: "fail", message: "Server error", error });
-  }
-}
-
-
-const rejectLoan = async (req, res) => {
-  const { id } = req.body;
-  const { userID } = req.userID;
-  if (!id) {
-    return res.status(400).json({ status: "fail", message: "Loan ID is required" });
-  }
-  if (!userID) {
-    return res.status(400).json({ status: "fail", message: "User ID is required" });
-  }
-  if (!ObjectId.isValid(id) || !ObjectId.isValid(userID)) {
-    return res.status(400).json({ status: "fail", message: "Invalid Loan ID or User ID" });
-  }
-
-  try {
-    const loan = await LoanRequest.findOneAndUpdate(
-      { _id: id, userID: userID , status: "PENDING" },
-      { status: "CANCELLED" },
-      { new: true }
-    );
-
-    if (!loan) {
-      return res.status(404).json({ status: "fail", message: "Loan not found" });
-    }
-
-    return res.status(200).json({ status: "success", message: "Loan cancelled", loan });
-  } catch (error) {
-    return res.status(500).json({ status: "fail", message: "Server error", error });
-  }
-}
 
 
 const approveBuy = async (req, res) => {
@@ -239,6 +211,38 @@ const approveBuy = async (req, res) => {
   }
 }
 
+const approveSell = async (req, res) => {
+  const { id } = req.body;
+  const { userID } = req.userID;
+  if (!id) {
+    return res.status(400).json({ status: "fail", message: "Sell ID is required" });
+  }
+  if (!userID) {
+    return res.status(400).json({ status: "fail", message: "User ID is required" });
+  }
+  if (!ObjectId.isValid(id) || !ObjectId.isValid(userID)) {
+    return res.status(400).json({ status: "fail", message: "Invalid Sell ID or User ID" });
+  }
+
+  try {
+    const sell = await OrderHistory.findOneAndUpdate(
+      { _id: id, userID: userID , status: "PENDING" },
+      { status: "COMPLETED" },
+      { new: true }
+    );
+
+    if (!sell) {
+      return res.status(404).json({ status: "fail", message: "Sell not found" });
+    }
+
+    return res.status(200).json({ status: "success", message: "Sell approved", sell });
+  } catch (error) {
+    return res.status(500).json({ status: "fail", message: "Server error", error });
+  }
+} 
+
+
+
 const rejectBuy = async (req, res) => {
   const { id } = req.body;
   const { userID } = req.userID;
@@ -270,22 +274,52 @@ const rejectBuy = async (req, res) => {
 }
 
 //History_orders
-const getAllBuyOrders = async (req, res) => {
+const rejectSell = async (req, res) => {
+  const { id } = req.body;
+  const { userID } = req.userID;
+  if (!id) {
+    return res.status(400).json({ status: "fail", message: "Sell ID is required" });
+  }
+  if (!userID) {
+    return res.status(400).json({ status: "fail", message: "User ID is required" });
+  }
+  if (!ObjectId.isValid(id) || !ObjectId.isValid(userID)) {
+    return res.status(400).json({ status: "fail", message: "Invalid Sell ID or User ID" });
+  }
+
   try {
-    const buyOrders = await OrderHistory.find({ type: "BUY" });
-    return res.status(200).json({ status: "success", data: buyOrders });
+    const sell = await OrderHistory.findOneAndUpdate(
+      { _id: id, userID: userID , status: "PENDING" },
+      { status: "CANCELLED" },
+      { new: true }
+    );
+
+    if (!sell) {
+      return res.status(404).json({ status: "fail", message: "Sell not found" });
+    }
+
+    return res.status(200).json({ status: "success", message: "Sell cancelled", sell });
   } catch (error) {
     return res.status(500).json({ status: "fail", message: "Server error", error });
   }
 }
 
+const getAllBuyOrders = async (req, res) => {
+  res.status(501).json({ status: "fail", message: "Not implemented yet ::: getAllBuyOrders" });
+}
 
+const getAllSellOrders = async (req, res) => {
+  res.status(501).json({ status: "fail", message: "Not implemented yet ::: getAllSellOrders" });
+}
+
+
+const getAllUsers = async (req, res) => {
+  res.status(501).json({ status: "fail", message: "Not implemented yet ::: getAllUsers" });
+}
 
 export {
     approveWithdrawal,
     rejectWithdrawal,
-    approvedLoan,
-    rejectLoan,
     approveddeposit,
     rejectDeposit,
     approveBuy,
@@ -295,7 +329,7 @@ export {
     getAllUsers,
     getAllDeposits,
     getAllWithdrawals,
-    getAllLoans,
     getAllBuyOrders,
     getAllSellOrders,
+    userapprove,
 }
