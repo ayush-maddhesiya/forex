@@ -35,8 +35,10 @@ import {
 from "../controllers/upi.controller.js";
 
 import {
-  getAllUsers,
   deleteUserById,
+  getAlluserKpis,
+  getUserbyId,
+  userreject
 } from "../controllers/user.controller.js";
 
 import { 
@@ -45,21 +47,11 @@ import {
     addtradetosell,
 } from "../controllers/orderhistory.controller.js";
 
-import {
-  getAlluserKpis,
-  getUserbyId,
-  userapprove,
-  userreject
-} from "../controllers/user.controller.js";
-
 
 import {
   getAllPendingWithdrawals,   // for number of pending withdrawals [route]  .length()
   getPendingWithdrawalById,   
   getVerifiedWithdrawalById,
-  approveWithdrawal,
-  rejectWithdrawal,
-  getAllWithdrawals,  //from i can get total requests  .populate(user)
   getallCompletedWithdrawals, // for KPIs
 
 
@@ -67,9 +59,6 @@ import {
   getAllPendingDeposits,
   getPendingDepositById,
   getVerifiedDepositById,
-  approvedDeposit,
-  rejectDeposit,
-  getAllDeposits,
 } from "../controllers/transaction.controller.js";
 
 
