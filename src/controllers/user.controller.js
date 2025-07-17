@@ -1,6 +1,11 @@
 import User from "../models/user.model.js"
 import bcrypt from "bcrypt"
 import nodemailer from "nodemailer"
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import Transaction from "../models/transaction.model.js";
+import OrderHistory from "../models/orderhistory.model.js";
+
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.ethereal.email',
@@ -242,6 +247,10 @@ const login = async (req, res) => {
                 message:"Your are not Verified"
             })
         }
+
+        // Update last login time
+        user.lastLogin = new Date();
+        await user.save();
 
         res.status(200)
             .cookie("accessToken", accessToken, options)
@@ -568,6 +577,108 @@ const getUserbyId = async (req, res) => {
 }   
 
 
+
+const getKYCInfo = async (req,res) => {
+    res.status(200).json({
+        status: "success",
+        message: "KYC info is provided to you shortly."
+    });   
+}
+
+
+const getLastLogin = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await User.findById(userId).select('lastLogin');
+        if (!user) {
+            return res.status(404).json({
+                status: "fail",
+                message: "User not found"
+            });
+        }
+
+        return res.status(201).json(
+            new ApiResponse(200, user.lastLogin ? user.lastLogin.toISOString() : null, "Last login retrieved successfully")
+        );
+
+    } catch (error) {
+        throw new ApiError(500, "Internal server error while retrieving last login", error.message);
+    }
+};
+
+
+const getOrderHistory = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+
+        // Fetch order history directly from OrderHistory collection
+        const orderHistory = await OrderHistory.find({ userId }).sort({ tradeDate: -1 });
+
+        return res.status(200).json(
+            new ApiResponse(200, orderHistory, "Order history retrieved successfully")
+        );
+
+    } catch (error) {
+        
+        throw new ApiError(500, "Internal server error while retrieving order history", error.message);
+    }
+};
+
+const getPersonalInfo = async (req, res) => {
+    //need to fix this
+    try {
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: "fail",
+                message: "User not found"
+            });
+        }
+        const personalInfo = {
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            aadharNo: user.aadharNo,
+            pan: user.pan
+        };
+
+        return res.status(200).json(
+            new ApiResponse(200, personalInfo, "Personal information retrieved successfully")
+        );
+
+    } catch (error) {
+        throw new ApiError(500, "Internal server error while retrieving personal information", error.message);
+    }
+};
+
+const getProfile = async (req, res) => {
+    //need to fix this
+    res.status(200).json(
+        new ApiResponse(200, "Profile information is provided to you shortly.", "Profile retrieved successfully")
+    );
+}
+
+const getTradeHistory = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const transactions = await Transaction.find({ userId })
+      .sort({ timestamp: -1 }); // Most recent first
+
+    return res.status(200).json(
+      new ApiResponse(200, transactions, "Trade history retrieved successfully")
+    );
+
+  } catch (error) {
+    return next(
+      new ApiError(500, "Internal server error while retrieving trade history", error.message)
+    );
+  }
+};
+
+
+
 export { 
     test, 
     register, 
@@ -579,6 +690,12 @@ export {
     setting, 
     profile,
 
+    getLastLogin,
+    getKYCInfo,
+    getOrderHistory,
+    getPersonalInfo,
+    getProfile,
+    getTradeHistory,
 
 
     

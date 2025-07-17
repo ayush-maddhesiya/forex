@@ -173,14 +173,10 @@ const UserSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'OrderHistory'
   }],
-  createdAt: {
-    type: Date,
-    default: Date.now
+  lastLogin: {
+  type: Date,
+  default: null
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
 }, {
   timestamps: true
 });

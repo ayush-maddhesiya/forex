@@ -4,28 +4,28 @@ import { Router } from "express";
 const router = Router();
 import { isAdmin, veriftyJWT }  from  "../middleware/auth.middleware.js";
 
-import {
-  userapprove,
-  approveWithdrawal,
-  rejectWithdrawal,
-  approveddeposit,
-  rejectDeposit,
-  approveBuy,
-  rejectBuy,
-  approveSell,
-  rejectSell,
-  getAllUsers,
-  getAllDeposits,
-  getAllWithdrawals,
-  getAllBuyOrders,
-  getAllSellOrders,
-  /*
-  TODO: add more routes for admin
-  some use get all manage
-  get all deposits
-  */
+// import {
+//   userapprove,
+//   approveWithdrawal,
+//   rejectWithdrawal,
+//   approveddeposit,
+//   rejectDeposit,
+//   approveBuy,
+//   rejectBuy,
+//   approveSell,
+//   rejectSell,
+//   // getAllUsers,
+//   getAllDeposits,
+//   getAllWithdrawals,
+//   getAllBuyOrders,
+//   getAllSellOrders,
+//   /*
+//   TODO: add more routes for admin
+//   some use get all manage
+//   get all deposits
+//   */
  
-} from "../controllers/admin.controller.js";
+// } from "../controllers/admin.controller.js";
 
 import {
   getAllUpi,
@@ -82,7 +82,7 @@ router.route("/approve-sell").post(veriftyJWT, isAdmin, approveSell);
 router.route("/reject-sell").post(veriftyJWT, isAdmin, rejectSell);
 
 
-// //to remove this  [loan section]
+// //to remove this  [loan section][Remove]
 // router.route("/get-all-loans").get(veriftyJWT, isAdmin, getAllLoans);
 // router.route("/get-all-loan-requests").get(veriftyJWT, isAdmin, getAllLoans);
 // router.route("/reject-loan").post(veriftyJWT, isAdmin, rejectLoan);
