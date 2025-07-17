@@ -16,8 +16,8 @@ app.use(cookieParser())
 
 
 import userRoute from "./routes/user.route.js";
+import adminRoute from "./routes/admin.route.js";
 //commented out routes for now, will be added later
-// import adminRoute from "./routes/admin.route.js";
 // import dashboardRoute from "./routes/dashboard.route.js";
 
 
@@ -28,8 +28,8 @@ import userRoute from "./routes/user.route.js";
 
 
 app.use("/api/v1/user", userRoute)
+app.use("/api/v1/admin", adminRoute);
 //commented out routes for now, will be added later
-// app.use("/api/v1/admin", adminRoute);
 // app.use("/api/v1/dashboard", dashboardRoute);
 
 

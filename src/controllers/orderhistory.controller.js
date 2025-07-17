@@ -1,5 +1,5 @@
-import { OrderHistory } from "../models/orderhistory.model.js";
-import { User } from "../models/user.model.js";
+import  OrderHistory  from "../models/orderhistory.model.js";
+import  User  from "../models/user.model.js";
 
 const totalTrade = async (req, res) => {
     try {

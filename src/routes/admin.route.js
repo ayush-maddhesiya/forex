@@ -73,13 +73,13 @@ import {
 } from "../controllers/transaction.controller.js";
 
 
-
-router.route("/get-all-sell-orders").get(veriftyJWT, isAdmin, getAllSellOrders);
-router.route("/get-all-buy-orders").get(veriftyJWT, isAdmin, getAllBuyOrders);
-router.route("/approve-buy").post(veriftyJWT, isAdmin, approveBuy);
-router.route("/reject-buy").post(veriftyJWT, isAdmin, rejectBuy);
-router.route("/approve-sell").post(veriftyJWT, isAdmin, approveSell);
-router.route("/reject-sell").post(veriftyJWT, isAdmin, rejectSell);
+// might need this ------------------->><<-----------------------------------------
+// router.route("/get-all-sell-orders").get(veriftyJWT, isAdmin, getAllSellOrders);
+// router.route("/get-all-buy-orders").get(veriftyJWT, isAdmin, getAllBuyOrders);
+// router.route("/approve-buy").post(veriftyJWT, isAdmin, approveBuy);
+// router.route("/reject-buy").post(veriftyJWT, isAdmin, rejectBuy);
+// router.route("/approve-sell").post(veriftyJWT, isAdmin, approveSell);
+// router.route("/reject-sell").post(veriftyJWT, isAdmin, rejectSell);
 
 
 // //to remove this  [loan section][Remove]
