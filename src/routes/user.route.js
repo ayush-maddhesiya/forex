@@ -62,7 +62,7 @@ router.route('/dashboard').get(dashboard);
 
 // Transaction routes
 // Deposit Funds
-router.route('/deposit').post(veriftyJWT, deposit);
+router.route('/deposit').post(veriftyJWT, deposit);   //add funds
 router.route('/deposit-history').get(veriftyJWT, depositHistory);
 router.route('/deposit-details').get(veriftyJWT, depositDetails);
 

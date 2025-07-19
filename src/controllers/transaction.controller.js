@@ -298,46 +298,38 @@ const generateTransactionId = () => {
 };
 
 // Create Deposit Transaction
+// transaction.controller.js
 const deposit = asyncHandler(async (req, res) => {
-  //need to see if all fields are same name or not
-  const { amount, userId, email } = req.body;
-
-  const user = User.findById(email || userId);
-
-  if(!user){
-    throw new ApiError(404, "User not found");
-  }
+  const { amount } = req.body;
+  const userId = req.user._id; // from JWT
 
   if (!amount || amount <= 0) {
     throw new ApiError(400, "Valid amount is required");
   }
 
-  if (!paymentMethod) {
-    throw new ApiError(400, "Payment method is required");
-  }
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
 
-  try {
-    const transaction = await Transaction.create({
-      userId,
-      type: 'DEPOSIT',
-      transactionId: generateTransactionId(),
-      status: 'PENDING',
-      amount,
-      paymentMethod,
-      description : `Deposit of ₹${amount} via ${paymentMethod}`,
-      verified: false
-    });
+  const transaction = await Transaction.create({
+    userId,
+    type: 'DEPOSIT',
+    transactionId: generateTransactionId(),
+    status: 'PENDING',
+    amount: Number(amount),
+    paymentMethod: 'UPI',
+    description: `Deposit of ₹${amount} via UPI`,
+    verified: false,
+  });
 
-    user.transactions.push(transaction._id);
-    await user.save();
-    
-    return res.status(201).json(
-      new ApiResponse(201, transaction, "Deposit transaction created successfully")
-    );
-  } catch (error) {
-    throw new ApiError(500, "Failed to create deposit transaction");
-  }
+  user.transactions.push(transaction._id);
+  await user.save();
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, transaction, "Deposit request created"));
 });
+
+
 
 
 // Create Withdrawal Transaction
@@ -372,24 +364,32 @@ const withdraw = asyncHandler(async (req, res) => {
   }
 });
 
-// Get Transaction History  this should provie both despoit and withdraw
+// Get Transaction History (with DEPOSIT and WITHDRAWAL)
 const transactionHistory = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { page = 1, limit = 10, } = req.query;
+  const { page = 1, limit = 10 } = req.query;
 
   try {
-    const transactions = await Transaction.find({ userId })
+    const transactionsRaw = await Transaction.find({ userId })
       .sort({ timestamp: -1 })
-      .limit(limit * 1)
+      .limit(parseInt(limit))
       .skip((page - 1) * limit)
       .populate('userId', 'name email');
 
-    const total = await Transaction.countDocuments(filter);
+    const total = await Transaction.countDocuments({ userId });
+
+    const transactions = transactionsRaw.map((tx) => ({
+      id: tx._id,
+      date: tx.timestamp.toISOString().split('T')[0], // Format YYYY-MM-DD
+      type: tx.type.toLowerCase() === 'deposit' ? 'deposit' : 'withdraw',
+      amount: `$${tx.amount.toLocaleString()}`,
+      status: tx.status.toLowerCase(),
+    }));
 
     const response = {
       transactions,
       totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      currentPage: parseInt(page),
       total
     };
 
@@ -397,9 +397,11 @@ const transactionHistory = asyncHandler(async (req, res) => {
       new ApiResponse(200, response, "Transaction history retrieved successfully")
     );
   } catch (error) {
+    console.error("Error fetching transaction history:", error);
     throw new ApiError(500, "Failed to retrieve transaction history");
   }
 });
+
 
 // Get Deposit History
 const depositHistory = asyncHandler(async (req, res) => {
