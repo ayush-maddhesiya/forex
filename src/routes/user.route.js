@@ -18,10 +18,11 @@ import {
 
   // Profile controllers
   getProfile,
-  getPersonalInfo,
-  getKYCInfo,
-  getBankDetails,
-  getLastLogin,
+  updateProfile,
+  // getPersonalInfo,
+  // getKYCInfo,
+  // getBankDetails,
+  // getLastLogin,
   // Order/Trade controllers
   getOrderHistory,
   getTradeHistory
@@ -79,9 +80,11 @@ router.route('/order-history').get(veriftyJWT, getOrderHistory);
 router.route('/trade-history').get(veriftyJWT, getTradeHistory);
 
 // Profile (Account Settings) routes
-router.route('/profile').get(veriftyJWT, getProfile);   // profile and KYC Information
-router.route('/personal-info').get(veriftyJWT, getPersonalInfo);
-router.route('/bank-details').get(veriftyJWT, getBankDetails);
+router.route('/profile')
+  .get(veriftyJWT, getProfile)
+  .put(veriftyJWT, updateProfile);
 // router.route('/last-login').get(veriftyJWT, getLastLogin);
+
+
 
 export default router;

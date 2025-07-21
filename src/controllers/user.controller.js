@@ -219,7 +219,7 @@ const login = async (req, res) => {
     }
     try {
         const user = await User.findOne({ email });
-        console.log(`User from DB : ${req.userId}`)
+        // console.log(`User from DB : ${req.userId}`)
         if (!user) {
             return res.status(401).json({
                 status: "fail",
@@ -358,7 +358,7 @@ const changePassword = async (req, res) => {
 
 const dashboard = async (req, res) => {
     const userId = req.user.id;
-    console.log(`User from DB : ${req.userId} User from JWT : ${userId}`)
+    // console.log(`User from DB : ${req.userId} User from JWT : ${userId}`)
     // if (!userId) {
     //     return res.status(400).json({
     //         status: "fail",
@@ -376,7 +376,7 @@ const dashboard = async (req, res) => {
 
     
 
-    console.log(`User from DB : ${user}`)
+    // console.log(`User from DB : ${user}`)
     
     
     res.status(200).json({
@@ -388,43 +388,139 @@ const dashboard = async (req, res) => {
 
 //--------------settings---------------------------[Done]
 
-// this is for both profile and KYC Information
-const profile =  async (req, res) => {
+// // this is for both profile and KYC Information
+// const profile =  async (req, res) => {
+//     const userId = req.user.id;
+
+
+//     const user = await User.findById(userId).select('name email phone aadharNo pan');  //there is not username for this project
+
+//     res.status(200).json({
+//         status: "success",
+//         message: "profile success",
+//         user: user
+//     })
+// };
+
+
+// const getBankDetails = async (req, res) => {
+//     const userId = req.user.id;
+
+//     const user = await User.findById(userId).select('bankName accountNumber accountHolder ifscCode');
+
+//     if (!user) {
+//         return res.status(404).json({
+//             status: "fail",
+//             message: "User not found"
+//         });
+//     }
+
+//     res.status(200).json({
+//         status: "success",
+//         message: "Bank details retrieved successfully",
+//         bankDetails: {
+//             bankName: user.bankName,
+//             accountNumber: user.accountNumber,
+//             accountHolder: user.accountHolder,
+//             ifscCode: user.ifscCode
+//         }
+//     });
+// };
+
+// GET /profile
+const getProfile = async (req, res, next) => {
+  try {
     const userId = req.user.id;
 
+    const user = await User.findById(userId).select(
+      'name email phone aadharNo pan aadharPhoto panPhoto userPhoto bankName accountNumber accountHolder ifscCode lastLogin role status'
+    );
 
-    const user = await User.findById(userId).select('name email phone aadharNo pan');  //there is not username for this project
+    if (!user) {
+      return res.status(404).json(new ApiResponse(404, null, "User not found"));
+    }
 
-    res.status(200).json({
-        status: "success",
-        message: "profile success",
-        user: user
-    })
+    // Build response
+    const response = {
+      personal: {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        username: user.email.split('@')[0] || '', // fallback
+        role: user.role,
+        status: user.status,
+      },
+      kyc: {
+        aadharNumber: user.aadharNo,
+        panNumber: user.pan,
+        aadharPhoto: user.aadharPhoto,
+        panPhoto: user.panPhoto,
+        profilePhoto: user.userPhoto,
+      },
+      bank: {
+        name: user.bankName,
+        accountHolder: user.accountHolder,
+        accountNumber: user.accountNumber,
+        ifsc: user.ifscCode,
+      },
+      security: {
+        lastLogin: user.lastLogin ? user.lastLogin.toLocaleString('en-IN') : '',
+        // Add additional security fields as required
+        twoFactorEnabled: !!user.twoFactorEnabled, // If you store this
+        lastIp: req.ip || '', // Or use stored IP
+      }
+    };
+
+    res.status(200).json(
+      new ApiResponse(200, response, "Profile retrieved successfully")
+    );
+  } catch (error) {
+    next(new ApiError(500, "Internal server error while retrieving profile", error.message));
+  }
 };
 
 
-const getBankDetails = async (req, res) => {
+const updateProfile = async (req, res, next) => {
+  try {
     const userId = req.user.id;
+    // const { userInfo } = req.body;
+    // console.log("Update Profile Request Body:", req.body);
+    const { personal, kyc, bank } = req.body;
+    console.log("\n\n Personal Info:", personal);
+    console.log("\n\n KYC Info:", kyc);
+    console.log("\n\n Bank Info:", bank);
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json(new ApiResponse(404, null, "User not found"));
 
-    const user = await User.findById(userId).select('bankName accountNumber accountHolder ifscCode');
-
-    if (!user) {
-        return res.status(404).json({
-            status: "fail",
-            message: "User not found"
-        });
+    // Update fields as needed (example)
+    if (personal) {
+      user.name = personal.name;
+      user.email = personal.email;
+      user.phone = personal.phone;
+      user.username = personal.username || user.email.split('@')[0]; // Fallback to email prefix if username not provided
+        // user.role = personal.role || user.role; // Allow role update if provided
+        // user.status = personal.status || user.status; // Allow status update if provided
+        
+    }
+    if (kyc) {
+      user.aadharNo = kyc.aadharNumber;
+      user.pan = kyc.panNumber;
+      user.aadharPhoto = kyc.aadharPhoto;
+      user.panPhoto = kyc.panPhoto;
+      user.userPhoto = kyc.profilePhoto;
+    }
+    if (bank) {
+      user.bankName = bank.name;
+      user.accountHolder = bank.accountHolder;
+      user.accountNumber = bank.accountNumber;
+      user.ifscCode = bank.ifsc;
     }
 
-    res.status(200).json({
-        status: "success",
-        message: "Bank details retrieved successfully",
-        bankDetails: {
-            bankName: user.bankName,
-            accountNumber: user.accountNumber,
-            accountHolder: user.accountHolder,
-            ifscCode: user.ifscCode
-        }
-    });
+    await user.save();
+    res.status(200).json(new ApiResponse(200, null, "Profile updated successfully"));
+  } catch (error) {
+    next(new ApiError(500, "Internal server error while updating profile", error.message));
+  }
 };
 
 
@@ -606,23 +702,66 @@ const getLastLogin = async (req, res) => {
     }
 };
 
-
 const getOrderHistory = async (req, res, next) => {
     try {
         const userId = req.user.id;
+        const { status } = req.query; // Add filter support
 
-        // Fetch order history directly from OrderHistory collection
-        const orderHistory = await OrderHistory.find({ userId }).sort({ tradeDate: -1 });
+        // Build filter query
+        let filterQuery = { userId };
+        if (status && status !== 'All') {
+            filterQuery.status = status.toUpperCase();
+        }
+
+        // Fetch order history from OrderHistory collection
+        const orderHistory = await OrderHistory.find(filterQuery)
+            .sort({ tradeDate: -1 });
+
+        // Calculate summary data
+        const summaryData = await calculateSummaryData(userId);
 
         return res.status(200).json(
-            new ApiResponse(200, orderHistory, "Order history retrieved successfully")
+            new ApiResponse(200, {
+                trades: orderHistory,
+                summary: summaryData
+            }, "Order history retrieved successfully")
         );
 
     } catch (error) {
-        
         throw new ApiError(500, "Internal server error while retrieving order history", error.message);
     }
 };
+
+// Helper function to calculate summary data
+const calculateSummaryData = async (userId) => {
+    const trades = await OrderHistory.find({ userId });
+    
+    const totalTrades = trades.length;
+    const totalInvestment = trades.reduce((sum, trade) => sum + trade.tradeAmount, 0);
+    const totalProfitLoss = trades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
+    
+    // You can add logic here to calculate changes from last week
+    // For now, returning basic calculations
+    
+    return [
+        { 
+            title: 'Total Trades', 
+            value: totalTrades.toString(), 
+            change: '+5 from last week' // You can calculate this dynamically
+        },
+        { 
+            title: 'Total Investment', 
+            value: `$${totalInvestment.toLocaleString()}`, 
+            change: '+$1,200 from last week' // You can calculate this dynamically
+        },
+        { 
+            title: 'Net Profit/Loss', 
+            value: totalProfitLoss >= 0 ? `+$${totalProfitLoss.toLocaleString()}` : `-$${Math.abs(totalProfitLoss).toLocaleString()}`, 
+            change: '+$320 from last week' // You can calculate this dynamically
+        }
+    ];
+};
+
 
 const getPersonalInfo = async (req, res) => {
     //need to fix this
@@ -652,12 +791,7 @@ const getPersonalInfo = async (req, res) => {
     }
 };
 
-const getProfile = async (req, res) => {
-    //need to fix this
-    res.status(200).json(
-        new ApiResponse(200, "Profile information is provided to you shortly.", "Profile retrieved successfully")
-    );
-}
+
 
 const getTradeHistory = async (req, res, next) => {
   try {
@@ -686,15 +820,19 @@ export {
     changePassword, 
     dashboard, 
     login, 
-    getBankDetails, 
+    // getBankDetails, 
     setting, 
-    profile,
+    // profile,
+    //profile 
+    getProfile,
+    updateProfile,
+
 
     getLastLogin,
     getKYCInfo,
     getOrderHistory,
     getPersonalInfo,
-    getProfile,
+    // getProfile,
     getTradeHistory,
 
 

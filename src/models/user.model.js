@@ -275,9 +275,5 @@ UserSchema.statics.getUserBalances = async function(userId) {
   };
 };
 
-
-
-
-
 const User = mongoose.model('User', UserSchema);
 export default User;
