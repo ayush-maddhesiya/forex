@@ -1,168 +1,142 @@
 import { Router } from "express";
-
+import { isAdmin, veriftyJWT } from "../middleware/auth.middleware.js";
 
 const router = Router();
-import { isAdmin, veriftyJWT }  from  "../middleware/auth.middleware.js";
 
-// import {
-//   userapprove,
-//   approveWithdrawal,
-//   rejectWithdrawal,
-//   approveddeposit,
-//   rejectDeposit,
-//   approveBuy,
-//   rejectBuy,
-//   approveSell,
-//   rejectSell,
-//   // getAllUsers,
-//   getAllDeposits,
-//   getAllWithdrawals,
-//   getAllBuyOrders,
-//   getAllSellOrders,
-//   /*
-//   TODO: add more routes for admin
-//   some use get all manage
-//   get all deposits
-//   */
- 
-// } from "../controllers/admin.controller.js";
-
+// Import controllers
 import {
   getAllUpi,
   addUpi,
   deleteUpiById,
-}
-from "../controllers/upi.controller.js";
+} from "../controllers/upi.controller.js";
 
 import {
   getAllUsers,
   deleteUserById,
+  getAlluserKpis,
+  updateTransactionStatus,
+  getUserbyId,
+  userapprove,
+  userreject,
 } from "../controllers/user.controller.js";
 
 import { 
-    getUserTradeHistory,
-    addtradetobuy,
-    addtradetosell,
+  getUserTradeHistory,
+  createTrade,
+  updateTrade,
 } from "../controllers/orderhistory.controller.js";
 
 import {
-  getAlluserKpis,
-  getUserbyId,
-  userapprove,
-  userreject
-} from "../controllers/user.controller.js";
-
-
-import {
-  getAllPendingWithdrawals,   // for number of pending withdrawals [route]  .length()
-  getPendingWithdrawalById,   
+  getAllPendingWithdrawals,
+  getPendingWithdrawalById,
   getVerifiedWithdrawalById,
   approveWithdrawal,
   rejectWithdrawal,
-  getAllWithdrawals,  //from i can get total requests  .populate(user)
-  getallCompletedWithdrawals, // for KPIs
-
-
-  //--------deposits
+  getAllWithdrawals,
+  getallCompletedWithdrawals,
+  // Deposit routes
   getAllPendingDeposits,
+  getAllVerifiedDeposits,
   getPendingDepositById,
   getVerifiedDepositById,
   approvedDeposit,
   rejectDeposit,
-  getAllDeposits,
+  getAllDeposits
 } from "../controllers/transaction.controller.js";
 
+// =============================================================================
+// USER MANAGEMENT ROUTES
+// =============================================================================
 
-// might need this ------------------->><<-----------------------------------------
-// router.route("/get-all-sell-orders").get(veriftyJWT, isAdmin, getAllSellOrders);
-// router.route("/get-all-buy-orders").get(veriftyJWT, isAdmin, getAllBuyOrders);
-// router.route("/approve-buy").post(veriftyJWT, isAdmin, approveBuy);
-// router.route("/reject-buy").post(veriftyJWT, isAdmin, rejectBuy);
-// router.route("/approve-sell").post(veriftyJWT, isAdmin, approveSell);
-// router.route("/reject-sell").post(veriftyJWT, isAdmin, rejectSell);
-
-
-// //to remove this  [loan section][Remove]
-// router.route("/get-all-loans").get(veriftyJWT, isAdmin, getAllLoans);
-// router.route("/get-all-loan-requests").get(veriftyJWT, isAdmin, getAllLoans);
-// router.route("/reject-loan").post(veriftyJWT, isAdmin, rejectLoan);
-// router.route("/approve-loan").post(veriftyJWT, isAdmin, approvedLoan);
-
-
-//---------------New User Requests [Done]
-//-------------------------Total Users , Pending Users, Approved Users, 
-//-------------------------User Verification Requests
-//----------------------------------Approve User/Reject User
+// User KPIs and Statistics
 router.route("/get-users-kpi").get(veriftyJWT, isAdmin, getAlluserKpis);
+
+// User Approval/Rejection
 router.route("/approve-user").post(veriftyJWT, isAdmin, userapprove);
 router.route("/reject-user").post(veriftyJWT, isAdmin, userreject);
+
+// User Operations
+router.route("/get-all-users").get(veriftyJWT, isAdmin, getAllUsers);
 router.route("/get-user").get(veriftyJWT, isAdmin, getUserbyId);
+router.route("/delete-user").delete(veriftyJWT, isAdmin, deleteUserById);
 
+// =============================================================================
+// TRANSACTION MANAGEMENT ROUTES
+// =============================================================================
 
+// General Transaction Operations
+router.route("/transactions/:transactionId/status").patch(veriftyJWT, isAdmin, updateTransactionStatus);
 
-//------------------Deposit Requests[Done]
-//------------------------------Pending Deposits
-//---------------------------------------approve Deposit/Reject Deposit
-//------------------------------Verified Deposits
-//---------------------------------------all list
-//---------------------------------------view by id
-router.route("/get-all-pending-deposits").get(veriftyJWT, isAdmin, getAllPendingDeposits);
-router.route("/get-pending-deposit").get(veriftyJWT, isAdmin, getPendingDepositById);
-router.route("/get-verified-deposit").get(veriftyJWT, isAdmin, getVerifiedDepositById);
-router.route("/approve-deposit").post(veriftyJWT, isAdmin, approvedDeposit);
-router.route("/reject-deposit").post(veriftyJWT, isAdmin, rejectDeposit);
+// -----------------------------------------------------------------------------
+// DEPOSIT ROUTES
+// -----------------------------------------------------------------------------
+
+// Deposit Lists
 router.route("/get-all-deposits").get(veriftyJWT, isAdmin, getAllDeposits);
+router.route("/get-all-pending-deposits").get(veriftyJWT, isAdmin, getAllPendingDeposits);
+router.route("/get-all-verified-deposits").get(veriftyJWT, isAdmin, getAllVerifiedDeposits);
 
+// Deposit Details by ID
+router.route("/get-pending-deposit/:id").get(veriftyJWT, isAdmin, getPendingDepositById);
+router.route("/get-verified-deposit/:id").get(veriftyJWT, isAdmin, getVerifiedDepositById);
 
-//------------------Withdrawal Requests[Done]
-//-------------------------------------------------Total Requests, Pending Requests, total Amount,Completed Requests
-//------------------------------Pending Withdrawals
-// ---------------------------------------approve Withdrawal/Reject Withdrawal
-//------------------------------Verified Withdrawals
-// ---------------------------------------all list
-// ---------------------------------------view by id
-//needto add KPIs
-router.route("/get-all-complete-withdrawals").get(veriftyJWT, isAdmin, getallCompletedWithdrawals); // get all user kpis
+// Deposit Actions
+router.route("/approve-deposit/:id").patch(veriftyJWT, isAdmin, approvedDeposit);
+router.route("/reject-deposit/:id").patch(veriftyJWT, isAdmin, rejectDeposit);
+
+// -----------------------------------------------------------------------------
+// WITHDRAWAL ROUTES
+// -----------------------------------------------------------------------------
+
+// Withdrawal Lists
+router.route("/get-all-withdrawals").get(veriftyJWT, isAdmin, getAllWithdrawals);
 router.route("/get-all-pending-withdrawals").get(veriftyJWT, isAdmin, getAllPendingWithdrawals);
+router.route("/get-all-complete-withdrawals").get(veriftyJWT, isAdmin, getallCompletedWithdrawals);
+
+// Withdrawal Details by ID
 router.route("/get-pending-withdrawal").get(veriftyJWT, isAdmin, getPendingWithdrawalById);
 router.route("/get-verified-withdrawal").get(veriftyJWT, isAdmin, getVerifiedWithdrawalById);
+
+// Withdrawal Actions
 router.route("/approve-withdrawal").post(veriftyJWT, isAdmin, approveWithdrawal);
 router.route("/reject-withdrawal").post(veriftyJWT, isAdmin, rejectWithdrawal);
-router.route("/get-all-withdrawals").get(veriftyJWT, isAdmin, getAllWithdrawals);
 
+// =============================================================================
+// TRADE MANAGEMENT ROUTES
+// =============================================================================
 
+// Trade History and Operations
+router.route("/get-user-trade-history/:userId").get(veriftyJWT, isAdmin, getUserTradeHistory);
+router.route("/create-trade").post(veriftyJWT, isAdmin, createTrade);
+router.route("/update-trade/:tradeId").put(veriftyJWT, isAdmin, updateTrade);
 
-//----------------------Trade  History( trade order history )[Done]
-//-----------------------------select user( get all  user name )
-//------------------------------------then able to Trading History  ( order history)
-router.route("/get-user-trade-history").get(veriftyJWT, isAdmin, getUserTradeHistory);
-router.route("/add-trade-to-buy").post(veriftyJWT, isAdmin, addtradetobuy);
-router.route("/add-trade-to-sell").post(veriftyJWT, isAdmin, addtradetosell);
+// =============================================================================
+// UPI/PAYMENT MANAGEMENT ROUTES
+// =============================================================================
 
-
-//----------------------Add Bank Account[Done]
-//Todo: add model name Upi to Store all UPI details(CRUD)
-//----------------------------Currently Activated UPI
-//--------------------------------UPI List
+// UPI Operations
 router.route("/get-all-upi").get(veriftyJWT, isAdmin, getAllUpi);
 router.route("/add-upi").post(veriftyJWT, isAdmin, addUpi);
 router.route("/delete-upi").delete(veriftyJWT, isAdmin, deleteUpiById);
 
+// =============================================================================
+// FUTURE ROUTES (COMMENTED FOR POTENTIAL USE)
+// =============================================================================
 
-//-----------------------All User[Done] 
-//------------------------------Total Users, New User , Active Users, Suspended Users
-//-----------------------list of all users( name Status joined Last transaction)
-//------------------------------ Deleted Users/ View by id 
-//needto add KPIs
-router.route("/get-all-users").get(veriftyJWT, isAdmin, getAllUsers);
-// router.route("/get-user").get(veriftyJWT, isAdmin, getUserbyId);   go to line number 51
-router.route("/delete-user").delete(veriftyJWT, isAdmin, deleteUserById); // To delete user by id
+/*
+// Buy/Sell Order Management (if needed in future)
+router.route("/get-all-sell-orders").get(veriftyJWT, isAdmin, getAllSellOrders);
+router.route("/get-all-buy-orders").get(veriftyJWT, isAdmin, getAllBuyOrders);
+router.route("/approve-buy").post(veriftyJWT, isAdmin, approveBuy);
+router.route("/reject-buy").post(veriftyJWT, isAdmin, rejectBuy);
+router.route("/approve-sell").post(veriftyJWT, isAdmin, approveSell);
+router.route("/reject-sell").post(veriftyJWT, isAdmin, rejectSell);
 
-
-
-
-//Illgoical Account Settings
-//-----------------------What is the account settings for admin( why is that needed)
-
+// Loan Management (if loan feature is added back)
+router.route("/get-all-loans").get(veriftyJWT, isAdmin, getAllLoans);
+router.route("/get-all-loan-requests").get(veriftyJWT, isAdmin, getAllLoans);
+router.route("/reject-loan").post(veriftyJWT, isAdmin, rejectLoan);
+router.route("/approve-loan").post(veriftyJWT, isAdmin, approvedLoan);
+*/
 
 export default router;

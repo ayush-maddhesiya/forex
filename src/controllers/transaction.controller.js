@@ -615,19 +615,49 @@ const getTransactionById = asyncHandler(async (req, res) => {
 });
 
 
-// Admin: Get All Pending Withdrawals
 
 //----------------deposit-------------------
 const getAllPendingDeposits = asyncHandler(async (req, res) => {
   try {
-    const pendingDeposits = await Transaction.find({ type: 'DEPOSIT', status: 'PENDING' })
-      .populate('userId', 'name email');
+    const pendingDeposits = await Transaction.find({ 
+      type: 'DEPOSIT', 
+      status: 'PENDING' 
+    }).populate('userId', 'name email phone')
+      .sort({ timestamp: -1 }); // Sort by newest first
+    
     const totalPending = pendingDeposits.length;
+    
     return res.status(200).json(
-      new ApiResponse(200, { pendingDeposits, totalPending }, "Pending deposits retrieved successfully")
+      new ApiResponse(200, { 
+        pendingDeposits, 
+        totalPending 
+      }, "Pending deposits retrieved successfully")
     );
   } catch (error) {
     throw new ApiError(500, "Failed to retrieve pending deposits");
+  }
+});
+
+// New function to get verified deposits
+const getAllVerifiedDeposits = asyncHandler(async (req, res) => {
+  try {
+    const verifiedDeposits = await Transaction.find({ 
+      type: 'DEPOSIT', 
+      status: 'COMPLETED',
+      verified: true 
+    }).populate('userId', 'name email phone')
+      .sort({ updatedAt: -1 }); // Sort by newest first
+    
+    const totalVerified = verifiedDeposits.length;
+    
+    return res.status(200).json(
+      new ApiResponse(200, { 
+        verifiedDeposits, 
+        totalVerified 
+      }, "Verified deposits retrieved successfully")
+    );
+  } catch (error) {
+    throw new ApiError(500, "Failed to retrieve verified deposits");
   }
 });
 
@@ -635,8 +665,11 @@ const getPendingDepositById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   try {
-    const deposit = await Transaction.findOne({ _id: id, type: 'DEPOSIT', status: 'PENDING' })
-      .populate('userId', 'name email');
+    const deposit = await Transaction.findOne({ 
+      _id: id, 
+      type: 'DEPOSIT', 
+      status: 'PENDING' 
+    }).populate('userId', 'name email phone');
 
     if (!deposit) {
       throw new ApiError(404, "Pending deposit not found");
@@ -650,14 +683,16 @@ const getPendingDepositById = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 const getVerifiedDepositById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   try {
-    const deposit = await Transaction.findOne({ _id: id, type: 'DEPOSIT', status: 'VERIFIED' })
-      .populate('userId', 'name email ');
+    const deposit = await Transaction.findOne({ 
+      _id: id, 
+      type: 'DEPOSIT', 
+      status: 'COMPLETED',
+      verified: true 
+    }).populate('userId', 'name email phone');
 
     if (!deposit) {
       throw new ApiError(404, "Verified deposit not found");
@@ -671,29 +706,32 @@ const getVerifiedDepositById = asyncHandler(async (req, res) => {
   }
 });
 
+// Fixed function name to match your original naming convention
 const approvedDeposit = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  
   try {
     const deposit = await Transaction.findOneAndUpdate(
       { _id: id, type: 'DEPOSIT', status: 'PENDING' },
-      { status: 'COMPLETED' },
+      { 
+        status: 'COMPLETED',
+        verified: true,
+        updatedAt: new Date()
+      },
       { new: true }
-    ).populate('userId', 'name email ');
+    ).populate('userId', 'name email phone');
 
     if (!deposit) {
       throw new ApiError(404, "Pending deposit not found");
     }
-    deposit.verified = true; // Mark as verified
-    await deposit.save();
 
     return res.status(200).json(
-      new ApiResponse(200, deposit, "Pending deposit approved successfully")
+      new ApiResponse(200, deposit, "Deposit approved successfully")
     );
   } catch (error) {
-    throw new ApiError(500, "Failed to approve pending deposit");
+    throw new ApiError(500, "Failed to approve deposit");
   }
 });
-
 
 const rejectDeposit = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -706,34 +744,70 @@ const rejectDeposit = asyncHandler(async (req, res) => {
   try {
     const deposit = await Transaction.findOneAndUpdate(
       { _id: id, type: 'DEPOSIT', status: 'PENDING' },
-      { status: 'CANCELLED', failureReason: reason || "This is a reason that no one can tell , ask your lord" },
+      { 
+        status: 'CANCELLED', 
+        failureReason: reason,
+        updatedAt: new Date()
+      },
       { new: true }
-    ).populate('userId', 'name email ');
+    ).populate('userId', 'name email phone');
 
     if (!deposit) {
       throw new ApiError(404, "Pending deposit not found");
     }
 
     return res.status(200).json(
-      new ApiResponse(200, deposit, "Pending deposit rejected successfully")
+      new ApiResponse(200, deposit, "Deposit rejected successfully")
     );
   } catch (error) {
-    throw new ApiError(500, "Failed to reject pending deposit");
+    throw new ApiError(500, "Failed to reject deposit");
   }
 });
 
-
 const getAllDeposits = asyncHandler(async (req, res) => {
   try {
-    const deposits = await Transaction.find({ type: 'DEPOSIT' })
-      .populate('userId', 'name email ');
+    const { page = 1, limit = 50, status, startDate, endDate } = req.query;
+    
+    // Build filter object
+    const filter = { type: 'DEPOSIT' };
+    
+    if (status) {
+      filter.status = status.toUpperCase();
+    }
+    
+    if (startDate || endDate) {
+      filter.timestamp = {};
+      if (startDate) filter.timestamp.$gte = new Date(startDate);
+      if (endDate) filter.timestamp.$lte = new Date(endDate);
+    }
+
+    const deposits = await Transaction.find(filter)
+      .populate('userId', 'name email phone')
+      .sort({ timestamp: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    const total = await Transaction.countDocuments(filter);
 
     if (!deposits || deposits.length === 0) {
-      throw new ApiError(404, "No deposits found");
+      return res.status(200).json(
+        new ApiResponse(200, { 
+          deposits: [], 
+          total: 0,
+          page: parseInt(page),
+          totalPages: 0
+        }, "No deposits found")
+      );
     }
 
     return res.status(200).json(
-      new ApiResponse(200, deposits, "All deposits retrieved successfully")
+      new ApiResponse(200, { 
+        deposits, 
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit)
+      }, "All deposits retrieved successfully")
     );
   } catch (error) {
     throw new ApiError(500, "Failed to retrieve all deposits"); 
@@ -813,47 +887,46 @@ const getVerifiedWithdrawalById = asyncHandler(async (req, res) => {
 });
 
 const approveWithdrawal = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body; // Get ID from request body instead of params
+  
   try {
     const withdrawal = await Transaction.findOneAndUpdate(
       { _id: id, type: 'WITHDRAWAL', status: 'PENDING' },
-      { status: 'COMPLETED' },
+      { status: 'COMPLETED', updatedAt: new Date() },
       { new: true }
-    ).populate('userId', 'name email amount date method status');
+    ).populate('userId', 'name email');
 
     if (!withdrawal) {
       throw new ApiError(404, "Pending withdrawal not found");
     }
 
-    withdrawal.verified = true; // Mark as verified
-    await withdrawal.save();
-
     return res.status(200).json(
-      new ApiResponse(200, withdrawal, "Pending withdrawal approved successfully")
+      new ApiResponse(200, withdrawal, "Withdrawal approved successfully")
     );
   } catch (error) {
-    throw new ApiError(500, "Failed to approve pending withdrawal");
+    throw new ApiError(500, "Failed to approve withdrawal");
   }
 });
 
 const rejectWithdrawal = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body; // Get ID from request body instead of params
+  
   try {
     const withdrawal = await Transaction.findOneAndUpdate(
       { _id: id, type: 'WITHDRAWAL', status: 'PENDING' },
-      { status: 'CANCELLED' },
+      { status: 'CANCELLED', updatedAt: new Date() },
       { new: true }
-    ).populate('userId', 'name email amount date method status');
+    ).populate('userId', 'name email');
 
     if (!withdrawal) {
       throw new ApiError(404, "Pending withdrawal not found");
     }
 
     return res.status(200).json(
-      new ApiResponse(200, withdrawal, "Pending withdrawal rejected successfully")
+      new ApiResponse(200, withdrawal, "Withdrawal rejected successfully")
     );
   } catch (error) {
-    throw new ApiError(500, "Failed to reject pending withdrawal");
+    throw new ApiError(500, "Failed to reject withdrawal");
   }
 });
 
@@ -907,6 +980,7 @@ export {
 
   //--------deposits
   getAllPendingDeposits,
+  getAllVerifiedDeposits, 
   getPendingDepositById,
   getVerifiedDepositById,
   approvedDeposit,
