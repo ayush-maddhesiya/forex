@@ -556,37 +556,37 @@ const getAllUsers = async (_req, res) => {
 };
 
 
-//admin only
-const deleteUserById = async (req, res) => {
-    const userId = req.params.id;
-    if(!userId) {
-        return res.status(400).json({
-            status: "fail",
-            message: "User ID is required"
-        });
-    }
+// //admin only
+// const deleteUserById = async (req, res) => {
+//     const userId = req.params.id;
+//     if(!userId) {
+//         return res.status(400).json({
+//             status: "fail",
+//             message: "User ID is required"
+//         });
+//     }
 
-    try {
+//     try {
 
-        const user = await User.findByIdAndDelete(userId);
-        if (!user) {
-            return res.status(404).json({
-                status: "fail",
-                message: "User not found"
-            });
-        }
-        res.status(200).json({
-            status: "success",
-            message: "User deleted successfully"
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: "error",
-            message: "Internal server error",
-            error: error.message
-        });
-    }
-};
+//         const user = await User.findByIdAndDelete(userId);
+//         if (!user) {
+//             return res.status(404).json({
+//                 status: "fail",
+//                 message: "User not found"
+//             });
+//         }
+//         res.status(200).json({
+//             status: "success",
+//             message: "User deleted successfully"
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             status: "error",
+//             message: "Internal server error",
+//             error: error.message
+//         });
+//     }
+// };
 
 const getAlluserKpis = async (req, res) => {
     try {
@@ -1083,8 +1083,86 @@ const rejectDeposit = async (req, res) => {
 
 
 
+// const userapprove = async (req, res) => {
+//     const userId  = req.params.id;
+//     try {
+//         const user = await User.findById(userId);
+//         if(!user) {
+//             return res.status(404).json({
+//                 status: "fail",
+//                 message: "User not found"
+//             });
+//         }
+//         user.isVerified = true;
+//         await user.save();
+    
+//         res.status(200).json({
+//             status: "success",
+//             message: "User approved successfully"
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             status: "error",
+//             message: "Internal server error",
+//             error: error.message
+//         });   
+//     }
+// }
+
+// const userreject = async (req, res) => {
+//     const userId  = req.params.id;
+//     try {
+//         const user = await User.findById(userId);
+//         if(!user) {
+//             return res.status(404).json({
+//                 status: "fail",
+//                 message: "User not found"
+//             });
+//         }
+//         user.isVerified = false;
+//         await user.save();
+    
+//         res.status(200).json({
+//             status: "success",
+//             message: "User rejected successfully"
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             status: "error",
+//             message: "Internal server error",
+//             error: error.message
+//         });   
+//     }
+// }
+
+// const getUserbyId = async (req, res) => {
+//     const userId  = req.params.id;
+//     try {
+//         const user = await User.findById(userId).select('name email phone aadharNo pan bankName accountNumber accountHolder ifscCode isVerified');
+//         if(!user) {
+//             return res.status(404).json({
+//                 status: "fail",
+//                 message: "User not found"
+//             });
+//         }
+    
+//         res.status(200).json({
+//             status: "success",
+//             message: "User retrieved successfully",
+//             data: user
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             status: "error",
+//             message: "Internal server error",
+//             error: error.message
+//         });   
+//     }
+// }   
+
 const userapprove = async (req, res) => {
-    const userId  = req.params.id;
+    // Get userId from request body instead of params
+    const { userId } = req.body;
     try {
         const user = await User.findById(userId);
         if(!user) {
@@ -1110,7 +1188,8 @@ const userapprove = async (req, res) => {
 }
 
 const userreject = async (req, res) => {
-    const userId  = req.params.id;
+    // Get userId from request body instead of params
+    const { userId } = req.body;
     try {
         const user = await User.findById(userId);
         if(!user) {
@@ -1136,9 +1215,10 @@ const userreject = async (req, res) => {
 }
 
 const getUserbyId = async (req, res) => {
-    const userId  = req.params.id;
+    // Get userId from query params or request body
+    const { userId } = req.query || req.body;
     try {
-        const user = await User.findById(userId).select('name email phone aadharNo pan bankName accountNumber accountHolder ifscCode isVerified');
+        const user = await User.findById(userId).select('name email phone aadharNo pan bankName accountNumber accountHolder ifscCode isVerified createdAt');
         if(!user) {
             return res.status(404).json({
                 status: "fail",
@@ -1158,8 +1238,63 @@ const getUserbyId = async (req, res) => {
             error: error.message
         });   
     }
-}   
+}
 
+const deleteUserById = async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const user = await User.findByIdAndDelete(userId);
+        if(!user) {
+            return res.status(404).json({
+                status: "fail",
+                message: "User not found"
+            });
+        }
+    
+        res.status(200).json({
+            status: "success",
+            message: "User deleted successfully"
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Internal server error",
+            error: error.message
+        });   
+    }
+}
+
+// // You'll also need to implement getAlluserKpis function
+// const getAlluserKpis = async (req, res) => {
+//     try {
+//         const totalUsers = await User.countDocuments();
+//         const verifiedUsers = await User.countDocuments({ isVerified: true });
+//         const unverifiedUsers = await User.countDocuments({ isVerified: false });
+        
+//         // Calculate new users (last 30 days)
+//         const thirtyDaysAgo = new Date();
+//         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+//         const newUsers = await User.countDocuments({ 
+//             createdAt: { $gte: thirtyDaysAgo } 
+//         });
+
+//         res.status(200).json({
+//             status: "success",
+//             data: {
+//                 totalUsers,
+//                 activeUsers: verifiedUsers,
+//                 suspendedUsers: unverifiedUsers,
+//                 newUsers
+//             }
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             status: "error",
+//             message: "Internal server error",
+//             error: error.message
+//         });   
+//     }
+// }
 
 
 const getKYCInfo = async (req,res) => {
