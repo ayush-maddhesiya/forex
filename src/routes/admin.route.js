@@ -51,12 +51,18 @@ import {
 // User KPIs and Statistics
 router.route("/get-users-kpi").get(veriftyJWT, isAdmin, getAlluserKpis);
 
-// User Approval/Rejection
+// User Approval/Rejection - Fixed to use consistent ID parameter approach
+router.route("/approve-user/:id").post(veriftyJWT, isAdmin, userapprove);
+router.route("/reject-user/:id").post(veriftyJWT, isAdmin, userreject);
+// Fallback routes for body-based requests (backward compatibility)
 router.route("/approve-user").post(veriftyJWT, isAdmin, userapprove);
 router.route("/reject-user").post(veriftyJWT, isAdmin, userreject);
 
-// User Operations
+// User Operations - Fixed to use consistent ID parameter approach
 router.route("/get-all-users").get(veriftyJWT, isAdmin, getAllUsers);
+router.route("/get-user/:id").get(veriftyJWT, isAdmin, getUserbyId);
+router.route("/delete-user/:id").delete(veriftyJWT, isAdmin, deleteUserById);
+// Fallback routes for query/body-based requests (backward compatibility)
 router.route("/get-user").get(veriftyJWT, isAdmin, getUserbyId);
 router.route("/delete-user").delete(veriftyJWT, isAdmin, deleteUserById);
 
@@ -85,19 +91,25 @@ router.route("/approve-deposit/:id").patch(veriftyJWT, isAdmin, approvedDeposit)
 router.route("/reject-deposit/:id").patch(veriftyJWT, isAdmin, rejectDeposit);
 
 // -----------------------------------------------------------------------------
-// WITHDRAWAL ROUTES
+// WITHDRAWAL ROUTES - Fixed to be consistent
 // -----------------------------------------------------------------------------
 
 // Withdrawal Lists
 router.route("/get-all-withdrawals").get(veriftyJWT, isAdmin, getAllWithdrawals);
 router.route("/get-all-pending-withdrawals").get(veriftyJWT, isAdmin, getAllPendingWithdrawals);
-router.route("/get-all-complete-withdrawals").get(veriftyJWT, isAdmin, getallCompletedWithdrawals);
+router.route("/get-all-completed-withdrawals").get(veriftyJWT, isAdmin, getallCompletedWithdrawals);
 
-// Withdrawal Details by ID
+// Withdrawal Details by ID - Fixed to use consistent ID parameter approach
+router.route("/get-pending-withdrawal/:id").get(veriftyJWT, isAdmin, getPendingWithdrawalById);
+router.route("/get-verified-withdrawal/:id").get(veriftyJWT, isAdmin, getVerifiedWithdrawalById);
+// Fallback routes for query-based requests (backward compatibility)
 router.route("/get-pending-withdrawal").get(veriftyJWT, isAdmin, getPendingWithdrawalById);
 router.route("/get-verified-withdrawal").get(veriftyJWT, isAdmin, getVerifiedWithdrawalById);
 
-// Withdrawal Actions
+// Withdrawal Actions - Fixed to use consistent ID parameter approach
+router.route("/approve-withdrawal/:id").post(veriftyJWT, isAdmin, approveWithdrawal);
+router.route("/reject-withdrawal/:id").post(veriftyJWT, isAdmin, rejectWithdrawal);
+// Fallback routes for body-based requests (backward compatibility)
 router.route("/approve-withdrawal").post(veriftyJWT, isAdmin, approveWithdrawal);
 router.route("/reject-withdrawal").post(veriftyJWT, isAdmin, rejectWithdrawal);
 
@@ -111,12 +123,14 @@ router.route("/create-trade").post(veriftyJWT, isAdmin, createTrade);
 router.route("/update-trade/:tradeId").put(veriftyJWT, isAdmin, updateTrade);
 
 // =============================================================================
-// UPI/PAYMENT MANAGEMENT ROUTES
+// UPI/PAYMENT MANAGEMENT ROUTES - Fixed to be consistent
 // =============================================================================
 
 // UPI Operations
 router.route("/get-all-upi").get(veriftyJWT, isAdmin, getAllUpi);
 router.route("/add-upi").post(veriftyJWT, isAdmin, addUpi);
+router.route("/delete-upi/:id").delete(veriftyJWT, isAdmin, deleteUpiById);
+// Fallback route for body-based requests (backward compatibility)
 router.route("/delete-upi").delete(veriftyJWT, isAdmin, deleteUpiById);
 
 // =============================================================================
@@ -127,16 +141,16 @@ router.route("/delete-upi").delete(veriftyJWT, isAdmin, deleteUpiById);
 // Buy/Sell Order Management (if needed in future)
 router.route("/get-all-sell-orders").get(veriftyJWT, isAdmin, getAllSellOrders);
 router.route("/get-all-buy-orders").get(veriftyJWT, isAdmin, getAllBuyOrders);
-router.route("/approve-buy").post(veriftyJWT, isAdmin, approveBuy);
-router.route("/reject-buy").post(veriftyJWT, isAdmin, rejectBuy);
-router.route("/approve-sell").post(veriftyJWT, isAdmin, approveSell);
-router.route("/reject-sell").post(veriftyJWT, isAdmin, rejectSell);
+router.route("/approve-buy/:id").post(veriftyJWT, isAdmin, approveBuy);
+router.route("/reject-buy/:id").post(veriftyJWT, isAdmin, rejectBuy);
+router.route("/approve-sell/:id").post(veriftyJWT, isAdmin, approveSell);
+router.route("/reject-sell/:id").post(veriftyJWT, isAdmin, rejectSell);
 
 // Loan Management (if loan feature is added back)
 router.route("/get-all-loans").get(veriftyJWT, isAdmin, getAllLoans);
 router.route("/get-all-loan-requests").get(veriftyJWT, isAdmin, getAllLoans);
-router.route("/reject-loan").post(veriftyJWT, isAdmin, rejectLoan);
-router.route("/approve-loan").post(veriftyJWT, isAdmin, approvedLoan);
+router.route("/reject-loan/:id").post(veriftyJWT, isAdmin, rejectLoan);
+router.route("/approve-loan/:id").post(veriftyJWT, isAdmin, approvedLoan);
 */
 
 export default router;

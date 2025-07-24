@@ -536,24 +536,24 @@ const setting = async (req, res) => {
 //TODO: Add email verification functionality
 
 
-//admin only
-const getAllUsers = async (_req, res) => {
-    try {
-        const users = await User.find().select("name _id email ");
+//admin only--- below  one better-- commented out temporarily
+// const getAllUsers = async (_req, res) => {
+//     try {
+//         const users = await User.find().select("name _id email ");
         
-        res.status(200).json({
-            status: "success",
-            message: "Users retrieved successfully",
-            data: users
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: "error",
-            message: "Internal server error",
-            error: error.message
-        });
-    }
-};
+//         res.status(200).json({
+//             status: "success",
+//             message: "Users retrieved successfully",
+//             data: users
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             status: "error",
+//             message: "Internal server error",
+//             error: error.message
+//         });
+//     }
+// };
 
 
 // //admin only
@@ -1161,24 +1161,38 @@ const rejectDeposit = async (req, res) => {
 // }   
 
 const userapprove = async (req, res) => {
-    // Get userId from request body instead of params
-    const { userId } = req.body;
+    // Get userId from params, body, or query (flexible approach)
+    const userId = req.params.id || req.body.userId || req.query.userId;
+    
+    if (!userId) {
+        return res.status(400).json({
+            status: "fail",
+            message: "User ID is required"
+        });
+    }
+
     try {
         const user = await User.findById(userId);
-        if(!user) {
+        if (!user) {
             return res.status(404).json({
                 status: "fail",
                 message: "User not found"
             });
         }
+
         user.isVerified = true;
         await user.save();
-    
+
         res.status(200).json({
             status: "success",
-            message: "User approved successfully"
+            message: "User approved successfully",
+            data: {
+                userId: user._id,
+                isVerified: user.isVerified
+            }
         });
     } catch (error) {
+        console.error('Error approving user:', error);
         res.status(500).json({
             status: "error",
             message: "Internal server error",
@@ -1188,24 +1202,38 @@ const userapprove = async (req, res) => {
 }
 
 const userreject = async (req, res) => {
-    // Get userId from request body instead of params
-    const { userId } = req.body;
+    // Get userId from params, body, or query (flexible approach)
+    const userId = req.params.id || req.body.userId || req.query.userId;
+    
+    if (!userId) {
+        return res.status(400).json({
+            status: "fail",
+            message: "User ID is required"
+        });
+    }
+
     try {
         const user = await User.findById(userId);
-        if(!user) {
+        if (!user) {
             return res.status(404).json({
                 status: "fail",
                 message: "User not found"
             });
         }
+
         user.isVerified = false;
         await user.save();
-    
+
         res.status(200).json({
             status: "success",
-            message: "User rejected successfully"
+            message: "User rejected successfully",
+            data: {
+                userId: user._id,
+                isVerified: user.isVerified
+            }
         });
     } catch (error) {
+        console.error('Error rejecting user:', error);
         res.status(500).json({
             status: "error",
             message: "Internal server error",
@@ -1215,23 +1243,70 @@ const userreject = async (req, res) => {
 }
 
 const getUserbyId = async (req, res) => {
-    // Get userId from query params or request body
-    const { userId } = req.query || req.body;
+    // Get userId from params, body, or query (flexible approach)
+    const userId = req.params.id || req.body.userId || req.query.userId;
+    
+    if (!userId) {
+        return res.status(400).json({
+            status: "fail",
+            message: "User ID is required"
+        });
+    }
+
     try {
-        const user = await User.findById(userId).select('name email phone aadharNo pan bankName accountNumber accountHolder ifscCode isVerified createdAt');
-        if(!user) {
+        const user = await User.findById(userId).select('name email phone aadharNo pan bankName accountNumber accountHolder ifscCode isVerified createdAt updatedAt');
+        if (!user) {
             return res.status(404).json({
                 status: "fail",
                 message: "User not found"
             });
         }
-    
+
         res.status(200).json({
             status: "success",
             message: "User retrieved successfully",
             data: user
         });
     } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({
+            status: "error",
+            message: "Internal server error",
+            error: error.message
+        });   
+    }
+}
+
+
+
+const getAllUsers = async (req, res) => {
+    try {
+        // You can add pagination, filtering, and sorting here
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
+
+        const users = await User.find()
+            .select('name email phone aadharNo pan bankName accountNumber accountHolder ifscCode isVerified createdAt updatedAt')
+            .sort({ createdAt: -1 }) // Latest users first
+            .skip(skip)
+            .limit(limit);
+
+        const totalUsers = await User.countDocuments();
+
+        res.status(200).json({
+            status: "success",
+            message: "Users retrieved successfully",
+            data: users,
+            pagination: {
+                page,
+                limit,
+                total: totalUsers,
+                pages: Math.ceil(totalUsers / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
         res.status(500).json({
             status: "error",
             message: "Internal server error",
@@ -1241,7 +1316,7 @@ const getUserbyId = async (req, res) => {
 }
 
 const deleteUserById = async (req, res) => {
-    const { userId } = req.body;
+    const { userId } =  req.params.id || req.body.userId || req.query.userId;
     try {
         const user = await User.findByIdAndDelete(userId);
         if(!user) {
