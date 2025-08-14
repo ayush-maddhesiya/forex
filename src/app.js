@@ -9,7 +9,7 @@ import rateLimit from "express-rate-limit";
 
 
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: "*",
     credentials: true
 }))
 
@@ -35,6 +35,15 @@ app.use(Express.static("public"))
 app.use(cookieParser())
 
 
+
+
+
+app.get("/", (req, res) => {
+    res.send("Welcome to the API");
+});
+
+
+
 import userRoute from "./routes/user.route.js";
 import adminRoute from "./routes/admin.route.js";
 import dashboardRoute from "./routes/dashboard.route.js";
@@ -47,11 +56,22 @@ import dashboardRoute from "./routes/dashboard.route.js";
 // import paymentRoute from "./routes/payment.route.js";
 
 
+app.get("/api/v1", (req, res) => {
+    res.send("Welcome to the API for Forex Trading");
+});
+
+
 app.use("/api/v1/user", userRoute)
 app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/dashboard", dashboardRoute);
 //commented out routes for now, will be added later
 
+app.use((req, res, next) => {
+    res.status(404).json({
+        success: false,
+        message: "Route not found",
+    });
+});
 
 
 // app.use("/api/v1/transaction", transactionRoute)

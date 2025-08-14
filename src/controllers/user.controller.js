@@ -593,6 +593,7 @@ const getAlluserKpis = async (req, res) => {
         // Get total users count
         const totalUsers = await User.countDocuments();
 
+        
         // Get active traders (users with transactions or login in last 30 days)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -610,6 +611,7 @@ const getAlluserKpis = async (req, res) => {
             ]
         });
 
+        console.log("This is admin dashboard __________________------------------:::::::::")
         // Get pending withdrawals
         const pendingWithdrawals = await Transaction.aggregate([
             {
